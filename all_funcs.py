@@ -138,11 +138,9 @@ def get_current_marks(user_id):
         1077,
         1092
     ]
-    output = PrettyTable(['Предмет', 'Оценки'])
-    output.set_style(prettytable.MARKDOWN)
-    output.align = 'l'
-    output.hrules = prettytable.ALL
-    output.vrules = prettytable.NONE
+    output_array = []
+
+
 
     session = create_session(user_id)
     param = set_eduID_for_curmarks(session)
@@ -152,13 +150,20 @@ def get_current_marks(user_id):
     jssoup = json.loads(soup)
     print(jssoup)
     for i in jssoup['data']['items']:
-        print(i)
+
+
+
         print(i['estimate_type_code'])
         if int(i['estimate_type_code']) in codes:
-
             output_dict[i['subject_name']] = output_dict.get(i['subject_name'], []) + [i['estimate_value_name']]
     print(output_dict)
     for key,value in output_dict.items():
+        output = PrettyTable(['Предмет', 'Оценки'])
+        output.set_style(prettytable.MARKDOWN)
+        output.align = 'l'
+        output.hrules = prettytable.ALL
+        output.vrules = prettytable.NONE
+
         output.add_row([key, value])
-    return output
-print(get_current_marks(481370222))
+        output_array.append(output)
+    return output_array
