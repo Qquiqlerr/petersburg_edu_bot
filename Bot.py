@@ -3,6 +3,7 @@ from telebot import types
 import json
 from tables import *
 import all_funcs
+import pysondb as db
 import os
 with open('token.json','r') as t:
     token = json.load(t)
@@ -14,6 +15,8 @@ type_codes = [
 ]
 
 funcs = types.ReplyKeyboardMarkup()
+
+database = db.getDb('user_info.json')
 
 marks = types.KeyboardButton('Оценки')
 funcs.add(marks)
@@ -43,7 +46,7 @@ for i in marks_per:
 @bot.message_handler(commands=['start'])
 def hello_and_reg(msg):
     bot.send_message(msg.chat.id,"Привет! Давай начнем!")
-    if not os.path.isdir(f"User_info/{msg.chat.id}"):
+    if len(database.getByQuery(query={"user_id": msg.chat.id})) == 0:
         send = bot.send_message(msg.chat.id, "Введите логин и пароль в формате\n"
                                       "Login:pass")
         bot.register_next_step_handler(send, reg)
