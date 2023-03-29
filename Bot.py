@@ -18,14 +18,23 @@ funcs = types.ReplyKeyboardMarkup()
 marks = types.KeyboardButton('Оценки')
 funcs.add(marks)
 
-marks = [types.KeyboardButton('Оценки за первое полугодие'),
-         types.KeyboardButton('Оценки за второе полугодие'),
-         types.KeyboardButton('Оценки за год'),
+marks = [types.KeyboardButton('Оценки за период'),
+         types.KeyboardButton('Текущие оценки'),
          types.KeyboardButton('Назад')]
+
+marks_per = [types.KeyboardButton('Оценки за первое полугодие'),
+             types.KeyboardButton('Оценки за второе полугодие'),
+             types.KeyboardButton('Оценки за год'),
+             types.KeyboardButton('Назад')
+]
 
 marks_markup = types.ReplyKeyboardMarkup()
 for i in marks:
     marks_markup.add(i)
+
+marks_per_markup = types.ReplyKeyboardMarkup()
+for i in marks_per:
+    marks_per_markup.add(i)
 
 
 
@@ -55,18 +64,33 @@ def reply_to(msg):
 
 @bot.message_handler(content_types=['text'])
 def work_start(msg):
-    bot.send_message(msg.chat.id,'Отлично! Выбери период',reply_markup=marks_markup)
+    bot.send_message(msg.chat.id,'Отлично! Выбери, что тебе нужно',reply_markup=marks_markup)
     bot.register_next_step_handler(msg,work)
 def work(msg):
-    if msg.text == 'Оценки за первое полугодие':
-        bot.send_message(msg.chat.id, all_funcs.get_marks(msg.chat.id,'first_half'))
-    elif msg.text == 'Оценки за второе полугодие':
-        bot.send_message(msg.chat.id, all_funcs.get_marks(msg.chat.id, 'second_half'))
-    elif msg.text == 'Оценки за год':
-        bot.send_message(msg.chat.id, all_funcs.get_marks(msg.chat.id, 'year'))
+    if msg.text == 'Оценки за период':
+        bot.send_message(msg.chat.id, 'Отлично! Выбери период', reply_markup=marks_per_markup)
+        bot.register_next_step_handler(msg, per)
+    elif msg.text == 'Текущие оценки':
+        info = all_funcs.get_current_marks(msg.chat.id)
+        for i in info:
+            bot.send_message(msg.chat.id, i)
+        bot.register_next_step_handler(msg, work)
     elif msg.text == 'Назад':
         reply_to(msg)
-    bot.register_next_step_handler(msg, work)
+def per(msg):
+    if msg.text == 'Оценки за первое полугодие':
+        bot.send_message(msg.chat.id, all_funcs.get_marks(msg.chat.id, 'first_half'))
+        bot.register_next_step_handler(msg, per)
+    elif msg.text == 'Оценки за второе полугодие':
+        bot.send_message(msg.chat.id, all_funcs.get_marks(msg.chat.id, 'second_half'))
+        bot.register_next_step_handler(msg, per)
+    elif msg.text == 'Оценки за год':
+        bot.send_message(msg.chat.id, all_funcs.get_marks(msg.chat.id, 'year'))
+        bot.register_next_step_handler(msg, per)
+    elif msg.text == 'Назад':
+        work_start(msg)
+
+
 
 
 bot.infinity_polling()
