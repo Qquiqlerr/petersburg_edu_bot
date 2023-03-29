@@ -4,6 +4,7 @@ import prettytable
 from prettytable import PrettyTable
 import requests.cookies
 import os
+import pysondb as db
 from bs4 import BeautifulSoup
 import ast
 url = 'https://dnevnik2.petersburgedu.ru/api/user/auth/login'
@@ -28,6 +29,9 @@ list_period = {
     }
 }
 
+database = db.getDb('user_info.json')
+
+
 def json_loads_from_path(path):
     conf_path = os.path.join(ROOT_DIR, f'{path}')
     with open(f'{conf_path}','r') as f:
@@ -42,7 +46,6 @@ def create_data(log_and_pass):
         'type': 'email'
     }
     return datas
-
 def set_eduID(session,period):
     s = json_loads_from_path('headers.json')
     cldId = json.loads(session.get('https://dnevnik2.petersburgedu.ru/api/journal/person/related-child-list?p_page=1', headers=s).content)['data']['items'][0]['educations'][0]['education_id']
@@ -55,20 +58,24 @@ def set_eduID(session,period):
     }
     return param
 def make_cookies_with_json(cookies,user_id):
-    ccs = json.loads(cookies)['data']['token']
-    if not os.path.isdir(f"User_info/{user_id}"):
-        os.mkdir(f"User_info/{user_id}")
-    conf_path = os.path.join(ROOT_DIR, f"User_info/{user_id}/cookies.json")
-    with open(conf_path,'w') as f:
-        json.dump([
-              {
-                "name": "X-JWT-Token",
-                "value": f'{ccs}',
-                "domain": "dnevnik2.petersburgedu.ru",
-                "path": "/",
-                "expires": None
-              }
-            ],f)
+     ccs = json.loads(cookies)['data']['token']
+     it = {"user_id": user_id,"cookies" :{"name": "X-JWT-Token","value": f'{ccs}',"domain": "dnevnik2.petersburgedu.ru","path": "/","expires": None}}
+     if len(database.getByQuery(query={"user_id": user_id})) == 0:
+         database.add(it)
+
+    # if not os.path.isdir(f"User_info/{user_id}"):
+    #     os.mkdir(f"User_info/{user_id}")
+    # conf_path = os.path.join(ROOT_DIR, f"User_info/{user_id}/cookies.json")
+    # with open(conf_path,'w') as f:
+    #     json.dump([
+    #           {
+    #             "name": "X-JWT-Token",
+    #             "value": f'{ccs}',
+    #             "domain": "dnevnik2.petersburgedu.ru",
+    #             "path": "/",
+    #             "expires": None
+    #           }
+    #          ],f)
 def auth_and_create_cookies(datas,user_id):
     session = requests.Session()
     s = json_loads_from_path('headers.json')
@@ -79,18 +86,17 @@ def auth_and_create_cookies(datas,user_id):
     return make_cookies_with_json(logging.content,user_id)
 
 
-
 def create_session(user_id):
     session = requests.session()
-    cookies = json_loads_from_path(f'User_info/{user_id}/cookies.json')
+    #cookies = json_loads_from_path(f'User_info/{user_id}/cookies.json')
+    cookies = database.getByQuery(query={"user_id":user_id})[0]['cookies']
     session = requests.Session()
     s = json_loads_from_path('headers.json')
     cookies_jar = requests.cookies.RequestsCookieJar()
-    for item in cookies:
-        cookies_jar.set(**item)
+    cookies_jar.set(**cookies)
     session.cookies.update(cookies_jar)
-    return session
 
+    return session
 def get_marks(user_id,period):
     output = PrettyTable(['Предмет','Оценка'])
     output.set_style(prettytable.MARKDOWN)
@@ -120,6 +126,7 @@ def get_marks(user_id,period):
     return output
 def set_eduID_for_curmarks(session):
     s = json_loads_from_path('headers.json')
+    ses_get = session.get('https://dnevnik2.petersburgedu.ru/api/journal/person/related-child-list?p_page=1', headers=s)
     cldId = json.loads(session.get('https://dnevnik2.petersburgedu.ru/api/journal/person/related-child-list?p_page=1', headers=s).content)['data']['items'][0]['educations'][0]['education_id']
     param = {
         'p_educations[]': cldId,
@@ -148,7 +155,6 @@ def get_current_marks(user_id):
     profile = session.post('https://dnevnik2.petersburgedu.ru/api/journal/estimate/table', headers=header, params=param)
     soup = BeautifulSoup(profile.content, "lxml").find('p').contents[0]
     jssoup = json.loads(soup)
-    print(jssoup)
     for i in jssoup['data']['items']:
 
 
@@ -167,3 +173,4 @@ def get_current_marks(user_id):
         output.add_row([key, value])
         output_array.append(output)
     return output_array
+
