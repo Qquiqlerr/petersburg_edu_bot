@@ -63,19 +63,6 @@ def make_cookies_with_json(cookies,user_id):
      if len(database.getByQuery(query={"user_id": user_id})) == 0:
          database.add(it)
 
-    # if not os.path.isdir(f"User_info/{user_id}"):
-    #     os.mkdir(f"User_info/{user_id}")
-    # conf_path = os.path.join(ROOT_DIR, f"User_info/{user_id}/cookies.json")
-    # with open(conf_path,'w') as f:
-    #     json.dump([
-    #           {
-    #             "name": "X-JWT-Token",
-    #             "value": f'{ccs}',
-    #             "domain": "dnevnik2.petersburgedu.ru",
-    #             "path": "/",
-    #             "expires": None
-    #           }
-    #          ],f)
 def auth_and_create_cookies(datas,user_id):
     session = requests.Session()
     s = json_loads_from_path('headers.json')
