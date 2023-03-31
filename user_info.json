@@ -1,0 +1,15 @@
+{
+   "data": [
+      {
+         "user_id": 481370222,
+         "cookies": {
+            "name": "X-JWT-Token",
+            "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiI1YzVjZjAzYmRkMWM5MTFjY2Y1YzRkMTciLCJsYXN0QWN0aXZpdHkiOjE2ODAyNzkyMDksInR5cGUiOiJlbWFpbCIsImxhc3RJZCI6bnVsbH0.4noxJ3woQRI0M08GuZETrBTlUL1OSBU_8V32LQWpOWQ",
+            "domain": "dnevnik2.petersburgedu.ru",
+            "path": "/",
+            "expires": null
+         },
+         "id": 616275273720747466
+      }
+   ]
+}
