@@ -31,7 +31,6 @@ list_period = {
 
 database = db.getDb('user_info.json')
 
-
 def json_loads_from_path(path):
     conf_path = os.path.join(ROOT_DIR, f'{path}')
     with open(f'{conf_path}','r') as f:
@@ -46,10 +45,10 @@ def create_data(log_and_pass):
         'type': 'email'
     }
     return datas
+
 def set_eduID(session,period):
     s = json_loads_from_path('headers.json')
     cldId = json.loads(session.get('https://dnevnik2.petersburgedu.ru/api/journal/person/related-child-list?p_page=1', headers=s).content)['data']['items'][0]['educations'][0]['education_id']
-    print(cldId)
     param = {
         'p_educations[]': cldId,
         'p_estimate_types[]': list_period[f'{period}']['estimate_type'],
@@ -57,6 +56,7 @@ def set_eduID(session,period):
         'p_periods[]': list_period[f'{period}']['id']
     }
     return param
+
 def make_cookies_with_json(cookies,user_id):
      ccs = json.loads(cookies)['data']['token']
      it = {"user_id": user_id,"cookies" :{"name": "X-JWT-Token","value": f'{ccs}',"domain": "dnevnik2.petersburgedu.ru","path": "/","expires": None}}
@@ -72,10 +72,8 @@ def auth_and_create_cookies(datas,user_id):
     session.close()
     return make_cookies_with_json(logging.content,user_id)
 
-
 def create_session(user_id):
     session = requests.session()
-    #cookies = json_loads_from_path(f'User_info/{user_id}/cookies.json')
     cookies = database.getByQuery(query={"user_id":user_id})[0]['cookies']
     session = requests.Session()
     s = json_loads_from_path('headers.json')
@@ -93,11 +91,9 @@ def get_marks(user_id,period):
     session = create_session(user_id)
     param = set_eduID(session,period)
     profile = session.post('https://dnevnik2.petersburgedu.ru/api/journal/estimate/table', headers=header, params=param)
-    #print(profile.text)
     soup = BeautifulSoup(profile.content, "lxml").find('p').contents[0]
     subject_name = ''
     estimate_value_name = ''
-    print(soup)
     jssoup = json.loads(soup)
     for i in range(len(jssoup['data']['items'])):
         for key, value in jssoup['data']['items'][i].items():
@@ -111,6 +107,7 @@ def get_marks(user_id,period):
         estimate_value_name = ''
     session.close()
     return output
+
 def set_eduID_for_curmarks(session):
     s = json_loads_from_path('headers.json')
     ses_get = session.get('https://dnevnik2.petersburgedu.ru/api/journal/person/related-child-list?p_page=1', headers=s)
@@ -123,6 +120,7 @@ def set_eduID_for_curmarks(session):
         'p_limit' : 100
     }
     return param
+
 def get_current_marks(user_id):
     codes = [
         1063,
@@ -132,10 +130,7 @@ def get_current_marks(user_id):
         1077,
         1092
     ]
-    output_array = []
-
-
-
+    output_array = ''
     session = create_session(user_id)
     param = set_eduID_for_curmarks(session)
     output_dict = {}
@@ -143,21 +138,9 @@ def get_current_marks(user_id):
     soup = BeautifulSoup(profile.content, "lxml").find('p').contents[0]
     jssoup = json.loads(soup)
     for i in jssoup['data']['items']:
-
-
-
-        print(i['estimate_type_code'])
         if int(i['estimate_type_code']) in codes:
             output_dict[i['subject_name']] = output_dict.get(i['subject_name'], []) + [i['estimate_value_name']]
-    print(output_dict)
     for key,value in output_dict.items():
-        output = PrettyTable(['Предмет', 'Оценки'])
-        output.set_style(prettytable.MARKDOWN)
-        output.align = 'l'
-        output.hrules = prettytable.ALL
-        output.vrules = prettytable.NONE
-
-        output.add_row([key, value])
-        output_array.append(output)
+        output_array += f'{key} : {", " .join(value)}\n\n'
     return output_array
 

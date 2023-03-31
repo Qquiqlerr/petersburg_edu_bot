@@ -2,10 +2,8 @@ from telebot.async_telebot import AsyncTeleBot
 import asyncio
 from telebot import types, asyncio_filters
 import json
-from tables import *
 import all_funcs
 import pysondb as db
-import os
 from telebot.asyncio_storage import StateMemoryStorage
 from telebot.asyncio_handler_backends import State, StatesGroup
 
@@ -21,36 +19,24 @@ class WorkStates(StatesGroup):
 with open('token.json','r') as t:
     token = json.load(t)
 bot = AsyncTeleBot(token['token'],state_storage=StateMemoryStorage())
-
-
 funcs = types.ReplyKeyboardMarkup()
-
 database = db.getDb('user_info.json')
-
 marks = types.KeyboardButton('Оценки')
 funcs.add(marks)
-
 marks = [types.KeyboardButton('Оценки за период'),
          types.KeyboardButton('Текущие оценки'),
          types.KeyboardButton('Назад')]
-
 marks_per = [types.KeyboardButton('Оценки за первое полугодие'),
              types.KeyboardButton('Оценки за второе полугодие'),
              types.KeyboardButton('Оценки за год'),
              types.KeyboardButton('Назад')
 ]
-
 marks_markup = types.ReplyKeyboardMarkup()
 for i in marks:
     marks_markup.add(i)
-
 marks_per_markup = types.ReplyKeyboardMarkup()
 for i in marks_per:
     marks_per_markup.add(i)
-
-
-
-
 
 @bot.message_handler(commands=['start'])
 async def hello_and_reg(msg):
@@ -59,10 +45,10 @@ async def hello_and_reg(msg):
         await bot.set_state(msg.from_user.id, WorkStates.reg, msg.chat.id)
         await bot.send_message(msg.chat.id, "Введите логин и пароль в формате\n"
                                             "Login:pass")
-        print(await bot.get_state(msg.from_user.id, msg.chat.id))
     else:
         await bot.set_state(msg.from_user.id, WorkStates.reply_to, msg.chat.id)
         await reply_to(msg)
+
 @bot.message_handler(state= WorkStates.reg)
 async def reg(msg):
     try:
@@ -74,19 +60,14 @@ async def reg(msg):
                                      "Попробуйте еще раз, или обратитесь к админу")
         await hello_and_reg(msg)
 
-
-
-
 @bot.message_handler(state=WorkStates.work)
 async def work(msg):
-    print('dgfiomvbcoi')
     if msg.text == 'Оценки за период':
         await bot.send_message(msg.chat.id, 'Отлично! Выбери период', reply_markup=marks_per_markup)
         await bot.set_state(msg.from_user.id, WorkStates.per, msg.chat.id)
     elif msg.text == 'Текущие оценки':
         info = all_funcs.get_current_marks(msg.chat.id)
-        for i in info:
-            await bot.send_message(msg.chat.id, i)
+        await bot.send_message(msg.chat.id, info)
     elif msg.text == 'Назад':
         await reply_to(msg)
 
